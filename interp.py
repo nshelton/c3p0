@@ -93,3 +93,18 @@ def arch(model, prompt="The cat sat on the", depth=2, save=None):
     if save:
         g.visual_graph.render(save, format="svg", cleanup=True)
     return g.visual_graph
+
+
+def block_arch(model, layer=0, depth=4, save=None):
+    # detail of a single transformer block (LN -> attn -> LN -> MLP), no Nx repeat.
+    # a block takes a residual-stream tensor [batch, seq, d_model], not tokens.
+    import torch
+    from torchview import draw_graph
+    x = torch.zeros(1, 6, model.cfg.d_model)
+    g = draw_graph(
+        model.blocks[layer], input_data=x, device="cpu",
+        depth=depth, expand_nested=True, graph_name=f"block {layer}",
+    )
+    if save:
+        g.visual_graph.render(save, format="svg", cleanup=True)
+    return g.visual_graph
