@@ -60,7 +60,6 @@ def predict(model, capture, k=10):
     idx = probs.argsort()[::-1][:k]
     return [(model.to_single_str_token(int(i)), float(probs[i])) for i in idx]
 
-
 def generate(model, prompt, n=10):
     tokens = model.to_tokens(prompt)
     with torch.no_grad():
@@ -80,3 +79,17 @@ def generate_captures(model, prompt, n=10):
         text = text + next_tok
         caps.append(cap)
     return text, caps
+
+def arch(model, prompt="The cat sat on the", depth=2, save=None):
+    # auto-traced computational graph. depth=1 = macro (blocks as units),
+    # depth=2+ = each block's attn/MLP internals. Returns a graphviz object
+    # that renders inline in Jupyter; pass save="arch" to also write arch.svg.
+    from torchview import draw_graph
+    tokens = model.to_tokens(prompt)
+    g = draw_graph(
+        model, input_data=tokens, device="cpu",
+        depth=depth, expand_nested=True, graph_name=model.cfg.model_name,
+    )
+    if save:
+        g.visual_graph.render(save, format="svg", cleanup=True)
+    return g.visual_graph
