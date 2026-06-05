@@ -5,8 +5,8 @@ from transformer_lens import HookedTransformer
 
 
 def pick_device():
-    if torch.backends.mps.is_available():
-        return "mps"
+    # CPU by default: TransformerLens warns MPS can be silently incorrect, and
+    # interp-scale models run instantly on CPU. Pass device="mps" to opt in.
     return "cpu"
 
 
@@ -32,7 +32,8 @@ class Capture:
 
 def run(model, prompt):
     tokens = model.to_tokens(prompt)
-    logits, cache = model.run_with_cache(tokens)
+    with torch.no_grad():
+        logits, cache = model.run_with_cache(tokens)
     attn = np.stack([
         cache["pattern", l][0].cpu().numpy()
         for l in range(model.cfg.n_layers)
