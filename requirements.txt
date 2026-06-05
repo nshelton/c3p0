@@ -1,3 +1,5 @@
 transformer_lens
 torch
 numpy
+matplotlib
+ipykernel

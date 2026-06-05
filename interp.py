@@ -50,3 +50,12 @@ def run(model, prompt):
 def act(capture, name, layer=None):
     key = name if layer is None else (name, layer)
     return capture.cache[key][0].cpu().numpy()
+
+
+def predict(model, capture, k=10):
+    # next-token distribution lives at the last position
+    logits = capture.logits[-1]
+    probs = np.exp(logits - logits.max())
+    probs /= probs.sum()
+    idx = probs.argsort()[::-1][:k]
+    return [(model.to_single_str_token(int(i)), float(probs[i])) for i in idx]
