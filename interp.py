@@ -59,3 +59,24 @@ def predict(model, capture, k=10):
     probs /= probs.sum()
     idx = probs.argsort()[::-1][:k]
     return [(model.to_single_str_token(int(i)), float(probs[i])) for i in idx]
+
+
+def generate(model, prompt, n=10):
+    tokens = model.to_tokens(prompt)
+    with torch.no_grad():
+        for _ in range(n):
+            logits = model(tokens)
+            next_id = logits[0, -1].argmax()
+            tokens = torch.cat([tokens, next_id.view(1, 1)], dim=1)
+    return model.to_string(tokens[0])
+
+
+def generate_captures(model, prompt, n=10):
+    caps = []
+    text = prompt
+    for _ in range(n):
+        cap = run(model, text)
+        next_tok = model.to_single_str_token(int(cap.logits[-1].argmax()))
+        text = text + next_tok
+        caps.append(cap)
+    return text, caps
